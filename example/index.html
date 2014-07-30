@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="../src/m.js"></script>
+		<script>
+			var sample0 = new Stt.Sample(2116.8, 4806.4, 2809.7, 2920.4);
+			var sample1 = new Stt.Sample(4001.2, 2553.8, 2968.8, 2167.1);
+			
+			
+			function gogo(){
+				console.log(new Date().getTime());
+				console.log(new Stt.Math().ttest({
+					data : sample0.getData(),
+					avr : sample0.getAverage(),
+					size : 4,
+					variance : sample0.getVariance()
+				}, {
+					data : sample1.getData(),
+					avr : sample1.getAverage(),
+					size : 4,
+					variance : sample1.getVariance()
+				}));
+				console.log(new Date().getTime());
+			}
+		</script>
+	</head>
+	<body>
+		<button onclick='gogo()'>GO</button>
+	</body>
+</html>
