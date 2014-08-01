@@ -2,40 +2,14 @@
 <html>
 	<head>
 		<script type="text/javascript" src="../src/m.js"></script>
-		<script type="text/javascript" src="jstat-master/dist/jstat.js"></script>
 		<script>
-			var sample0 = new Stt.Sample(2116.8, 4806.4, 2809.7, 2920.4);
-			var sample1 = new Stt.Sample(4001.2, 2553.8, 2968.8, 2167.1);
-			//var matrix = jStat([ 2116.8, 4806.4, 2809.7, 2920.4]);
-			//console.log(matrix.ttest([4001.2, 2553.8, 2968.8, 2167.1], 1));
+			var sample0 = new Stt.Sample([2116.8, 4806.4, 2809.7, 2920.4, 4001.2, 2553.8, 2968.8]);
+			sample0.add( 2167.1);
+			var sample1 = new Stt.Sample(2486.4, 2220.3, 1369.4, 2676.6, 1945.6, 2329, 2540.7, 2089.8);
 			function gogo(){
 				console.log(new Date().getTime());
-				/**
-				var tscore = Stt.Math.tscore({
-					data : sample0.getData(),
-					avr : sample0.getAverage(),
-					size : 4,
-					variance : sample0.getVariance()
-				}, {
-					data : sample1.getData(),
-					avr : sample1.getAverage(),
-					size : 4,
-					variance : sample1.getVariance()
-				});
-				console.log(jStat.ttest(tscore, 4, 2));
-				**/
-				var tscore = Stt.Math.ttest({
-					data : sample0.getData(),
-					avr : sample0.getAverage(),
-					size : 4,
-					variance : sample0.getVariance()
-				}, {
-					data : sample1.getData(),
-					avr : sample1.getAverage(),
-					size : 4,
-					variance : sample1.getVariance()
-				});
-				console.log(tscore);
+				var ttest = Stt.Math.ttest(sample0, sample1);
+				console.log(ttest);
 				console.log(new Date().getTime());
 			}
 		</script>
