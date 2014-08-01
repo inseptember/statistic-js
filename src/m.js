@@ -27,6 +27,11 @@ var Stt = {};
 					o2[k] = o1[k]
 				}
 			}
+		},
+		delayCall : function(t, fn, args, ms){
+			setTimeout(function(){
+				fn.apply(t, args||[]);
+			}, ms||0);
 		}
 	};
 	
@@ -131,12 +136,14 @@ var Stt = {};
 	};
 	Stt.util.extend(N, Stt.base);
 	
-	var CF = M.ContinuedFraction = function(op){
+	var CF = Stt.ContinuedFraction = function(op){
 		var me = this;
 		Stt.base.apply(me, [op]);
 		me.init.apply(me, arguments);
 	};
 	Stt.util.extend(CF, Stt.base);
+	
+	var B = Stt.Beta = {};
 })();
 
 (function(){
@@ -156,6 +163,15 @@ var Stt = {};
 
 (function(){
 	var N = Stt.Number;
+	
+	N.is = {
+		Infinity : function(v){
+			return v == Infinity || v == -Infinity;
+		},
+		Nan : function(v){
+			return isNaN(v);
+		}
+	};
 	
 	N.prototype.init = function(){
 		
@@ -267,26 +283,18 @@ var Stt = {};
 		while(it.hasNext()){
 			func.call(null, it.next())
 		}
+		delete it;
 	};
 })();
 
 (function(){
 	var M = Stt.Math;
 	
-	var B = M.Beta = {};
+	var B = Stt.Beta;
 	
-	var CF = M.ContinuedFraction;
+	var CF = Stt.ContinuedFraction;
 	
 	var N = Stt.Number;
-	
-	N.is = {
-		Infinity : function(v){
-			return v == Infinity || v == -Infinity;
-		},
-		Nan : function(v){
-			return isNaN(v);
-		}
-	};
 	
 	M.average = function(){
 		var length = 0, all = 0;
@@ -310,13 +318,13 @@ var Stt = {};
 	M.variance = function(s, average){
 		var avr = average || M.average(s), p1 = 0, p0 = s.size()-1;
 		s.each(function(val){
-			p1 += Math.pow(val - avr, 2);
+			p1 += val*val;
 		});
+		p1 -= (p0+1) * avr * avr;
 		return p1/p0;
 	};
 	M.gammar = function(n){
-		var _n = n-1;
-		return Math.sqrt(2 * Math.PI * _n) * Math.pow(_n/Math.E, _n);
+		return Math.exp((Math.log(2*Math.PI)- Math.log(n))/2 + n* (Math.log(n + 1.0/(12.0*n - 0.1/n)) - 1));
 	};
 	M.gammarln = function(n){
 		var cst = [76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
@@ -332,19 +340,21 @@ var Stt = {};
 	};
 	M.lnBeta = function(a, b){
 		return Math.log(Math.exp(M.gammarln(a)) * Math.exp(M.gammarln(b))/ Math.exp(M.gammarln(a + b)));
+		//return Math.log(M.gammar(a) * M.gammar(b)/ M.gammar(a + b));
 	};
 	M.degreesFreedom = function(sp0, sp1){
-		var n0 = sp0.size, n1 = sp1.size, v0 = sp0.variance, v1 = sp1.variance,
+		var n0 = sp0.size(), n1 = sp1.size(), v0 = sp0.getVariance(), v1 = sp1.getVariance(),
 		s0 = v0/n0, s1 = v1/n1;
 		return Math.pow(s0 + s1, 2)/(s0*s0/(n0-1) + s1*s1/(n1-1))
 	};
 	M.tscore = function(sp0, sp1){
-		var avr0 = sp0.avr || M.average(sp0.data), avr1 = sp1.avr || M.average(sp1.data), 
-			v0 = sp0.variance || M.variance(sp0.data, avr0),v1 = sp1.variance || M.variance(sp1.data, avr1);
-		var p0 = avr0 - avr1, p1 = Math.sqrt(v0/sp0.size + v1/sp1.size);
+		var avr0 = sp0.getAverage(), avr1 = sp1.getAverage(), 
+			v0 = sp0.getVariance(),v1 = sp1.getVariance();
+		var p0 = avr0 - avr1, p1 = Math.sqrt(v0/sp0.size() + v1/sp1.size());
 		return p0/p1;
 	};
 	M.ttest = function(sp0, sp1){
+		console.log(new Date().getTime());
 		var t = M.tscore(sp0, sp1), df = M.degreesFreedom(sp0, sp1);
 		//return Math.pow(1 + t*t/df, -(df + 1)/2) * M.gammar((df + 1)/2)/(M.gammar(df/2)*Math.sqrt(df * Math.PI));
 		return 2.0 * M.cdf(-t, df);
@@ -368,7 +378,12 @@ var Stt = {};
 		return Math.abs(x.toExponential(4) - y.toExponential(4)) <= maxUlps.toExponential(4)
 			|| Math.abs(x - y) <= maxUlps;
 	};
-	
+})();
+
+(function(){
+	var M = Stt.Math;
+	var B = Stt.Beta;
+	var CF = Stt.ContinuedFraction;
 	B.iBeta = function(x, a, b, ep, max){
 		var r, epsilon = ep||1.0E-14, maxIterations = max||2147483647;
 		if(x<0 || x>1 || a<=0 || b<=0){
@@ -397,7 +412,12 @@ var Stt = {};
 		
 		return r;
 	};
-	
+})();
+
+(function(){
+	var M = Stt.Math;	
+	var CF = Stt.ContinuedFraction;
+	var N = Stt.Number;
 	CF.prototype.init = function(op){
 		
 	};
@@ -466,8 +486,10 @@ var Stt = {};
 	var m = Stt.Math
 	S.prototype.init = function(){
 		var me = this;
-		var inner = new A();
+		me._set('_s',{});
+		me.on('set data', me.refresh);
 		
+		var inner = new A();
 		for(var i=arguments.length - 1; i>=0; i--){
 			var arg = arguments[i];
 			if(typeof arg == 'number'){
@@ -476,32 +498,39 @@ var Stt = {};
 				inner.concat(arg);
 			}
 		}
-		me._set("data", inner);
-		
-		var sumVal = m.sum(inner),size = inner.size(), avr = sumVal.value/size;
-		me._set("_s", {
-			sum : sumVal.value,
-			average : avr
-		});
-		
+		me._setData(inner);
+	};
+	
+	S.prototype.refresh = function(){
+		var me = this, inner = me.getData();
+		var avr = m.average(inner),size = inner.size(), sumVal = avr*size, stData = me._getStatData();
+		stData.sum = sumVal;
+		stData.average = avr;
+		stData.variance = m.variance(inner, avr);
+	};
+	S.prototype._setData = function(d){
+		this._set('data', d);
 	};
 	S.prototype._getStatData = function(){
 		return this._get('_s');
 	};
 	S.prototype.getData = function(){
 		return this._get("data");
-	},
+	};
 	S.prototype.getAverage = function(){
 		return this._getStatData().average;
-	},
+	};
+	S.prototype.size = function(){
+		return this.getData().size();
+	};
 	S.prototype.getVariance = function(){
 		var me = this;
-		var inner = me.getData(), vr = me._getStatData().variance;
-		if(vr == undefined){
-			vr = m.variance(inner, me.getAverage());
-			me._getStatData().variance = vr
-		}
-		return vr;
+		return  vr = me._getStatData().variance;
 	};
+	S.prototype.add = function(val){
+		var me = this, d = me.getData();
+		d.push(parseFloat(val));
+		me._setData(d);
+	}
 })();
 
