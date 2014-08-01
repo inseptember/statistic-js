@@ -354,10 +354,10 @@ var Stt = {};
 		return p0/p1;
 	};
 	M.ttest = function(sp0, sp1){
-		console.log(new Date().getTime());
 		var t = M.tscore(sp0, sp1), df = M.degreesFreedom(sp0, sp1);
 		//return Math.pow(1 + t*t/df, -(df + 1)/2) * M.gammar((df + 1)/2)/(M.gammar(df/2)*Math.sqrt(df * Math.PI));
-		return 2.0 * M.cdf(-t, df);
+		var r = 2.0 * M.cdf(-t, df);
+		return r;
 	};
 	M.cdf = function(x, df){
 		var ret = NaN;
