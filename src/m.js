@@ -2,14 +2,90 @@
 	@Author : w.f.
 **/
 var Stt = {};
-(function(){
-	Stt.is = {
+(function($$){
+	$$.define = function(name, prop){
+		var _object = function(st) {
+			this._ = st;
+			var e = this._e = {};
+		};
+		_object.prototype._get = function(k) {
+			return this._[k];
+		};
+		_object.prototype._set = function(k, v) {
+			var me = this;
+			if(typeof k == 'string'){
+				me._[k] = v;
+				me.asTrigger("set " + k, [v], me);
+			}else{
+				for(var a in k){
+					me._[a] = k[a];
+					me.asTrigger("set " + a, [k[a]], me);
+				}
+			}
+			
+			return me;
+		};
+		_object.prototype.on = function(k, callback){
+			var me = this;
+			if(typeof(callback) == 'function'){
+				if(!me._e[k]){
+					me._e[k] = [];
+				}
+				me._e[k].unshift(callback);
+			}
+			return me;
+		};
+		_object.prototype.off = function(k){
+			var me = this, e = me._e[k];
+			if(e){
+				if(e.length > 1){
+					e.pop();
+				}else{
+					delete me._e[k];
+				}
+			}
+			return me;
+		};
+		_object.prototype.trigger = function(k, args){
+			var me = this, e = me._e[k];
+			if(e){
+				for(var i=e.length-1; i>=0; i--){
+					e[i].apply(me, args);
+				}
+			}
+			return me;
+		};
+		_object.prototype.asTrigger = function(k, args, ms, _me){
+			var _this = _me || this, e = this._e[k];
+			if(e){
+				setTimeout(function(){
+					for(var i=e.length-1; i>=0; i--){
+						e[i].apply(_this, args);
+					}
+				}, ms||0);
+			}
+			return _this;
+		};
+		$$[name] = new Function('this._constructor_();this.init.apply(this, arguments);');
+		$$.util.extend($$[name], _object);
+		
+		for(var k in prop){
+			var p = prop[k];
+			if(typeof p === 'function'){
+				$$[name].prototype[k] = p;
+			}else{
+				$$[name][k] = p;
+			}
+		}
+		$$[name].prototype['_constructor_'] = (function(){_object.apply(this, [{}])});
+		return $$[name];
+	}
+	$$.is = {
 		array : function(o){
 			return Object.prototype.toString.call(o) === '[object Array]';
 		}
 	};
-	
-	Stt.util = {
+	$$.util = {
 		extend : function(sub, sup) {
 			var F = function() {
 			};
@@ -34,268 +110,167 @@ var Stt = {};
 			}, ms||0);
 		}
 	};
-	
-	var _object = Stt.base = function(st) {
-		this._ = st;
-		var e = this._e = {};
-	};
-	_object.prototype._get = function(k) {
-		return this._[k];
-	};
-	_object.prototype._set = function(k, v) {
-		var me = this;
-		me._[k] = v;
-		me.asTrigger("set " + k, [v], me);
-		return me;
-	};
-	_object.prototype.on = function(k, callback){
-		var me = this;
-		if(typeof(callback) == 'function'){
-			if(!me._e[k]){
-				me._e[k] = [];
-			}
-			me._e[k].unshift(callback);
-		}
-		return me;
-	};
-	_object.prototype.off = function(k){
-		var me = this, e = me._e[k];
-		if(e){
-			if(e.length > 1){
-				e.pop();
-			}else{
-				delete me._e[k];
-			}
-		}
-		return me;
-	};
-	_object.prototype.trigger = function(k, args){
-		var me = this, e = me._e[k];
-		if(e){
-			for(var i=e.length-1; i>=0; i--){
-				e[i].apply(me, args);
-			}
-		}
-		return me;
-	};
-	_object.prototype.asTrigger = function(k, args, ms, _me){
-		var _this = _me || this, e = this._e[k];
-		if(e){
-			setTimeout(function(){
-				for(var i=e.length-1; i>=0; i--){
-					e[i].apply(_this, args);
-				}
-			}, ms||0);
-		}
-		return _this;
-	};
-})();
+})(Stt);
 
-(function(){
-	var A = Stt.Array = function(){
-		Stt.base.apply(this, [{
-			bsize : 100,
-			bp : [0,0],
-			inner : {}
-		}]);
-		this.init();
-		return this;
-	};
-	A.defaults = {
+(function($$){
+	var M = $$.Math = {};
+	var B = $$.Beta = {};
+})(Stt);
+
+(function($$){
+	$$.define('Iterator', {
+		init : function(arr){
+			this._set({
+				arr : arr,
+				index : 0,
+				max : arr.size()
+			});
+		},
+		hasNext : function(){
+			return this._get('index')<this._get('max');
+		},
+		next : function(){
+			var me = this, i = me._get('index');
+			me._set('index', i + 1);
+			return me._get("arr").get(i);
+		}
+	});
+})(Stt);
+
+(function($$){
+	$$.define('Number', {
+		init : function(){},
+		is : {
+			Infinity : function(v){
+				return v == Infinity || v == -Infinity;
+			},
+			Nan : function(v){
+				return isNaN(v);
+			}
+		}
+	});
+})(Stt);
+
+(function($$){
+	Defaults = {
 		bsize : 100,
 		bp : [0,0],
 		inner : {}
 	};
-	Stt.util.extend(A, Stt.base);
-	
-	var M = Stt.Math = {};
-	
-	var I = Stt.Iterator = function(arr){
-		var me = this;
-		Stt.base.apply(me, [{
-			arr : arr,
-			index : 0,
-			max : arr.size()
-		}]);
-	};
-	Stt.util.extend(I, Stt.base);
-	
-	var S = Stt.Sample = function(){
-		var me = this;
-		Stt.base.apply(me, [{}]);
-		
-		me.name = 'Sample';
-		me.init.apply(me, arguments);
-	};
-	Stt.util.extend(S, Stt.base);
-	
-	var N = Stt.Number = function(){
-		var me = this;
-		Stt.base.apply(me, [{}]);
-		me.init.apply(me, arguments);
-	};
-	Stt.util.extend(N, Stt.base);
-	
-	var CF = Stt.ContinuedFraction = function(op){
-		var me = this;
-		Stt.base.apply(me, [op]);
-		me.init.apply(me, arguments);
-	};
-	Stt.util.extend(CF, Stt.base);
-	
-	var B = Stt.Beta = {};
-})();
-
-(function(){
-	var I = Stt.Iterator;
-	I.prototype.init = function(){
-		var me = this;
-	};
-	I.prototype.hasNext = function(){
-		return this._get('index')<this._get('max');
-	};
-	I.prototype.next = function(){
-		var me = this, i = me._get('index');
-		me._set('index', i + 1);
-		return me._get("arr").get(i);
-	};
-})();
-
-(function(){
-	var N = Stt.Number;
-	
-	N.is = {
-		Infinity : function(v){
-			return v == Infinity || v == -Infinity;
-		},
-		Nan : function(v){
-			return isNaN(v);
-		}
-	};
-	
-	N.prototype.init = function(){
-		
-	}
-})();
-
-(function(){
-	var A = Stt.Array, I = Stt.Iterator;
-	
 	var Util = {
 		index : function(i){
-			var mod = i%A.defaults.bsize, div = Math.floor(i/A.defaults.bsize);
+			var mod = i%Defaults.bsize, div = Math.floor(i/Defaults.bsize);
 			return [div, mod];
 		}
-	};
-	A.prototype._getBp = function(){
-		return this._get('bp');
-	};
-	A.prototype._getBLength = function(){
-		return this._getBp()[0];
-	};
-	A.prototype._getLengthInB = function(){
-		return this._getBp()[1];
-	};
-	A.prototype._getBlock = function(){
-		var me = this, bl = me._getBLength(), inner = me._get('inner');
-		var block = inner[bl];
-		if(!block){
-			inner[bl] = block = new Float32Array(me._get('bsize'));
-		}
-		return block;
-	};
-	A.prototype._getBlockBy = function(bi){
-		var me = this, inner = me._get('inner');
-		return inner[bi];
-	};
-	A.prototype.size = function(){
-		var me = this, bp = me._getBp();
-		return bp[0]*A.defaults.bsize + bp[1];
-	};
-	A.prototype.init = function(){
-		var me = this;
-		me.on("push", function(val, callback){
-			var bp = me._getBp(),block = me._getBlock();
-			block[bp[1]] = val;
-			me.trigger('resize', [1]);
-			if(typeof callback == 'function'){
-				callback.call(me, val, l);
+	},I = $$.Iterator;
+	$$.define('Array', {
+		_getBp : function(){
+			return this._get('bp');
+		},
+		_getBLength : function(){
+			return this._getBp()[0];
+		},
+		_getLengthInB : function(){
+			return this._getBp()[1];
+		},
+		_getBlock : function(){
+			var me = this, bl = me._getBLength(), inner = me._get('inner');
+			var block = inner[bl];
+			if(!block){
+				inner[bl] = block = new Float32Array(me._get('bsize'));
 			}
-		});
-		
-		me.on("resize", function(pl){
-			var bp = me._getBp(), delt = Math.floor(bp[1] - A.defaults.bsize);
-			if(delt < 0){
-				bp[1] += 1;
+			return block;
+		},
+		_getBlockBy : function(bi){
+			var me = this, inner = me._get('inner');
+			return inner[bi];
+		},
+		size : function(){
+			var me = this, bp = me._getBp();
+			return bp[0]*Defaults.bsize + bp[1];
+		},
+		init : function(){
+			var me = this;
+			me._set({
+				bsize : 100,
+				bp : [0,0],
+				inner : {}
+			});
+			me.on("push", function(val, callback){
+				var bp = me._getBp(),block = me._getBlock();
+				block[bp[1]] = val;
+				me.trigger('resize', [1]);
+				if(typeof callback == 'function'){
+					callback.call(me, val, l);
+				}
+			});
+			
+			me.on("resize", function(pl){
+				var bp = me._getBp(), delt = Math.floor(bp[1] - Defaults.bsize);
+				if(delt < 0){
+					bp[1] += 1;
+				}else{
+					bp[0] += 1;
+					bp[1] = delt;
+				}
+				me._set('bp', bp);
+			});
+		},
+		push : function(){
+			this.trigger('push', arguments);
+			return this;
+		},
+		pop : function(){
+			var me = this;
+			var result;
+			try{
+				var b = me._getBlock(),  bp = me._getBp();
+				result = b[bp[1] - 1];
+				b[bp[1] - 1] = 0;
+				me.trigger('resize', [-1]);
+			}catch(e){
+				console.log(e);
+			}
+			return result;
+		},
+		peek : function(){
+			var me = this;
+			return me._getBlockBy(me._getBLength() - 1)[me._getLengthInB()]
+		},
+		get : function(i){
+			var me = this, indx = Util.index(i), b = me._getBlockBy(indx[0]);
+			if(b){
+				return b[indx[1]]
+			}
+		},
+		set : function(i, val){
+			var me = this, indx = Util.index(i), b = me._getBlockBy(me._getBLength() - 1);
+			if(b){
+				b[me._getLengthInB()] = val;
 			}else{
-				bp[0] += 1;
-				bp[1] = delt;
+				me.push(val);
 			}
-			me._set('bp', bp);
-		});
-	};
-	A.prototype.push = function(){
-		this.trigger('push', arguments);
-		return this;
-	};
-	A.prototype.pop = function(){
-		var me = this;
-		var result;
-		try{
-			var b = me._getBlock(),  bp = me._getBp();
-			result = b[bp[1] - 1];
-			b[bp[1] - 1] = 0;
-			me.trigger('resize', [-1]);
-		}catch(e){
-			console.log(e);
+		},
+		concat : function(arr){
+			var me = this;
+			for(var i=0, l = arr.length; i<l; i++){
+				me.push(arr[i]);
+			}
+		},
+		iterator : function(){
+			return new $$.Iterator(this);
+		},
+		each : function(func){
+			var me = this, it = me.iterator();
+			while(it.hasNext()){
+				func.call(null, it.next())
+			}
+			delete it;
 		}
-		return result;
-	};
-	A.prototype.peek = function(){
-		var me = this;
-		return me._getBlockBy(me._getBLength() - 1)[me._getLengthInB()]
-	};
-	A.prototype.get = function(i){
-		var me = this, indx = Util.index(i), b = me._getBlockBy(indx[0]);
-		if(b){
-			return b[indx[1]]
-		}
-	};
-	A.prototype.set = function(i, val){
-		var me = this, indx = Util.index(i), b = me._getBlockBy(me._getBLength() - 1);
-		if(b){
-			b[me._getLengthInB()] = val;
-		}else{
-			me.push(val);
-		}
-	};
-	A.prototype.concat = function(arr){
-		var me = this;
-		for(var i=0, l = arr.length; i<l; i++){
-			me.push(arr[i]);
-		}
-	};
-	A.prototype.iterator = function(){
-		return new I(this);
-	};
-	A.prototype.each = function(func){
-		var me = this, it = me.iterator();
-		while(it.hasNext()){
-			func.call(null, it.next())
-		}
-		delete it;
-	};
-})();
-
-(function(){
-	var M = Stt.Math;
-	
-	var B = Stt.Beta;
-	
-	var CF = Stt.ContinuedFraction;
-	
-	var N = Stt.Number;
-	
+	});
+})(Stt);
+(function($$){
+	var M = $$.Math,B = $$.Beta,N = $$.Number;
 	M.average = function(){
 		var length = 0, all = 0;
 		var result = M.sum.apply(M, arguments);
@@ -378,12 +353,73 @@ var Stt = {};
 		return Math.abs(x.toExponential(4) - y.toExponential(4)) <= maxUlps.toExponential(4)
 			|| Math.abs(x - y) <= maxUlps;
 	};
-})();
+})(Stt);
 
-(function(){
-	var M = Stt.Math;
-	var B = Stt.Beta;
-	var CF = Stt.ContinuedFraction;
+(function($$){
+	var M = $$.Math,N = $$.Number;
+	$$.define('ContinuedFraction', {
+		init : function(op){
+			this._set(op);
+		},
+		getA : function(){
+			return this._get('getA')||function(){};
+		},
+		getB : function(){
+			return this._get('getB')||function(){};
+		},
+		evaluate : function(x, epsilon, maxIterations){
+			var me = this, small = 1e-50;
+			var hPrev = me.getA().call(me, 0, x);
+			
+			if(M.equals(hPrev, 0.0, small)){
+				hPrev = small;
+			}
+			
+			var n =1, dPrev = 0.0, cPrev = hPrev, hN = hPrev;
+			while(n < maxIterations){
+				var a = me.getA().call(me, n, x);
+				var b = me.getB().call(me, n, x);
+				
+				var dN = a + b * dPrev;
+				if(M.equals(dN, 0.0, small)){
+					dN = small;
+				}
+				var cN = a + b/cPrev;
+				if(M.equals(cN, 0.0, small)){
+					cN = small;
+				}
+				
+				dN = 1/dN;
+				var deltaN = cN*dN;
+				hN = hPrev * deltaN;
+				
+				if(N.is.Infinity(hN)==true){
+					throw "Continued fraction convergents diverged to +/- infinity for value " + hN;
+				}
+				if(N.is.Nan(hN) == true){
+					throw "Continued fraction diverged to NaN for value " + hN;
+				}
+				
+				if(Math.abs(deltaN - 1.0) < epsilon){
+					break;
+				}
+				
+				dPrev = dN;
+				cPrev = cN;
+				hPrev = hN;
+				n ++;
+			}
+			if(n >= maxIterations){
+				throw "Continued fraction convergents failed to converge (in less than "+maxIterations+" iterations) for value " + x;
+			}
+			return hN;
+		}
+	});
+	
+})(Stt);
+
+(function($$){
+	var M = $$.Math,B = $$.Beta,CF = $$.ContinuedFraction;
 	B.iBeta = function(x, a, b, ep, max){
 		var r, epsilon = ep||1.0E-14, maxIterations = max||2147483647;
 		if(x<0 || x>1 || a<=0 || b<=0){
@@ -412,125 +448,57 @@ var Stt = {};
 		
 		return r;
 	};
-})();
+})(Stt);
 
-(function(){
-	var M = Stt.Math;	
-	var CF = Stt.ContinuedFraction;
-	var N = Stt.Number;
-	CF.prototype.init = function(op){
-		
-	};
-	
-	CF.prototype.getA = function(){
-		return this._get('getA')||function(){};
-	};
-	
-	CF.prototype.getB = function(){
-		return this._get('getB')||function(){};
-	};
-	
-	CF.prototype.evaluate = function(x, epsilon, maxIterations){
-		var me = this, small = 1e-50;
-		var hPrev = me.getA().call(me, 0, x);
-		
-		if(M.equals(hPrev, 0.0, small)){
-			hPrev = small;
+(function($$){
+	var A = $$.Array,M = $$.Math
+	$$.define('Sample', {
+		init : function(){
+			var me = this;
+			me._set('_s',{});
+			me.on('set data', me.refresh);
+			
+			var inner = new A();
+			for(var i=arguments.length - 1; i>=0; i--){
+				var arg = arguments[i];
+				if(typeof arg == 'number'){
+					inner.push(parseFloat(arg));
+				}else if(Stt.is.array(arg)){
+					inner.concat(arg);
+				}
+			}
+			me._setData(inner);
+		},
+		refresh : function(){
+			var me = this, inner = me.getData();
+			var avr = M.average(inner),size = inner.size(), sumVal = avr*size, stData = me._getStatData();
+			stData.sum = sumVal;
+			stData.average = avr;
+			stData.variance = M.variance(inner, avr);
+		},
+		_setData : function(d){
+			this._set('data', d);
+		},
+		_getStatData : function(){
+			return this._get('_s');
+		},
+		getData : function(){
+			return this._get("data");
+		},
+		getAverage : function(){
+			return this._getStatData().average;
+		},
+		size : function(){
+			return this.getData().size();
+		},
+		getVariance : function(){
+			var me = this;
+			return  vr = me._getStatData().variance;
+		},
+		add : function(val){
+			var me = this, d = me.getData();
+			d.push(parseFloat(val));
+			me._setData(d);
 		}
-		
-		var n =1, dPrev = 0.0, cPrev = hPrev, hN = hPrev;
-		while(n < maxIterations){
-			var a = me.getA().call(me, n, x);
-			var b = me.getB().call(me, n, x);
-			
-			var dN = a + b * dPrev;
-			if(M.equals(dN, 0.0, small)){
-				dN = small;
-			}
-			var cN = a + b/cPrev;
-			if(M.equals(cN, 0.0, small)){
-				cN = small;
-			}
-			
-			dN = 1/dN;
-			var deltaN = cN*dN;
-			hN = hPrev * deltaN;
-			
-			if(N.is.Infinity(hN)==true){
-				throw "Continued fraction convergents diverged to +/- infinity for value " + hN;
-			}
-			if(N.is.Nan(hN) == true){
-				throw "Continued fraction diverged to NaN for value " + hN;
-			}
-			
-			if(Math.abs(deltaN - 1.0) < epsilon){
-				break;
-			}
-			
-			dPrev = dN;
-			cPrev = cN;
-			hPrev = hN;
-			n ++;
-		}
-		if(n >= maxIterations){
-			throw "Continued fraction convergents failed to converge (in less than "+maxIterations+" iterations) for value " + x;
-		}
-		
-		return hN;
-	}
-})();
-
-(function(){
-	var A = Stt.Array;
-	var S = Stt.Sample;
-	var m = Stt.Math
-	S.prototype.init = function(){
-		var me = this;
-		me._set('_s',{});
-		me.on('set data', me.refresh);
-		
-		var inner = new A();
-		for(var i=arguments.length - 1; i>=0; i--){
-			var arg = arguments[i];
-			if(typeof arg == 'number'){
-				inner.push(parseFloat(arg));
-			}else if(Stt.is.array(arg)){
-				inner.concat(arg);
-			}
-		}
-		me._setData(inner);
-	};
-	
-	S.prototype.refresh = function(){
-		var me = this, inner = me.getData();
-		var avr = m.average(inner),size = inner.size(), sumVal = avr*size, stData = me._getStatData();
-		stData.sum = sumVal;
-		stData.average = avr;
-		stData.variance = m.variance(inner, avr);
-	};
-	S.prototype._setData = function(d){
-		this._set('data', d);
-	};
-	S.prototype._getStatData = function(){
-		return this._get('_s');
-	};
-	S.prototype.getData = function(){
-		return this._get("data");
-	};
-	S.prototype.getAverage = function(){
-		return this._getStatData().average;
-	};
-	S.prototype.size = function(){
-		return this.getData().size();
-	};
-	S.prototype.getVariance = function(){
-		var me = this;
-		return  vr = me._getStatData().variance;
-	};
-	S.prototype.add = function(val){
-		var me = this, d = me.getData();
-		d.push(parseFloat(val));
-		me._setData(d);
-	}
-})();
-
+	});
+})(Stt);
