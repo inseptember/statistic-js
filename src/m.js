@@ -3,69 +3,69 @@
 **/
 var Stt = {};
 (function($$){
-	$$.define = function(name, prop){
-		var _object = function(st) {
-			this._ = st;
-			var e = this._e = {};
-		};
-		_object.prototype._get = function(k) {
-			return this._[k];
-		};
-		_object.prototype._set = function(k, v) {
-			var me = this;
-			if(typeof k == 'string'){
-				me._[k] = v;
-				me.asTrigger("set " + k, [v], me);
+	var _object = function(st) {
+		this._ = st;
+		var e = this._e = {};
+	};
+	_object.prototype._get = function(k) {
+		return this._[k];
+	};
+	_object.prototype._set = function(k, v) {
+		var me = this;
+		if(typeof k == 'string'){
+			me._[k] = v;
+			me.asTrigger("set " + k, [v], me);
+		}else{
+			for(var a in k){
+				me._[a] = k[a];
+				me.asTrigger("set " + a, [k[a]], me);
+			}
+		}
+		
+		return me;
+	};
+	_object.prototype.on = function(k, callback){
+		var me = this;
+		if(typeof(callback) == 'function'){
+			if(!me._e[k]){
+				me._e[k] = [];
+			}
+			me._e[k].unshift(callback);
+		}
+		return me;
+	};
+	_object.prototype.off = function(k){
+		var me = this, e = me._e[k];
+		if(e){
+			if(e.length > 1){
+				e.pop();
 			}else{
-				for(var a in k){
-					me._[a] = k[a];
-					me.asTrigger("set " + a, [k[a]], me);
-				}
+				delete me._e[k];
 			}
-			
-			return me;
-		};
-		_object.prototype.on = function(k, callback){
-			var me = this;
-			if(typeof(callback) == 'function'){
-				if(!me._e[k]){
-					me._e[k] = [];
-				}
-				me._e[k].unshift(callback);
+		}
+		return me;
+	};
+	_object.prototype.trigger = function(k, args){
+		var me = this, e = me._e[k];
+		if(e){
+			for(var i=e.length-1; i>=0; i--){
+				e[i].apply(me, args);
 			}
-			return me;
-		};
-		_object.prototype.off = function(k){
-			var me = this, e = me._e[k];
-			if(e){
-				if(e.length > 1){
-					e.pop();
-				}else{
-					delete me._e[k];
-				}
-			}
-			return me;
-		};
-		_object.prototype.trigger = function(k, args){
-			var me = this, e = me._e[k];
-			if(e){
+		}
+		return me;
+	};
+	_object.prototype.asTrigger = function(k, args, ms, _me){
+		var _this = _me || this, e = this._e[k];
+		if(e){
+			setTimeout(function(){
 				for(var i=e.length-1; i>=0; i--){
-					e[i].apply(me, args);
+					e[i].apply(_this, args);
 				}
-			}
-			return me;
-		};
-		_object.prototype.asTrigger = function(k, args, ms, _me){
-			var _this = _me || this, e = this._e[k];
-			if(e){
-				setTimeout(function(){
-					for(var i=e.length-1; i>=0; i--){
-						e[i].apply(_this, args);
-					}
-				}, ms||0);
-			}
-			return _this;
-		};
+			}, ms||0);
+		}
+		return _this;
+	};
+	$$.define = function(name, prop){
 		$$[name] = new Function('this._constructor_();this.init.apply(this, arguments);');
 		$$.util.extend($$[name], _object);
 		
