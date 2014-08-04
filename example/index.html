@@ -7,10 +7,10 @@
 			sample0.add( 2167.1);
 			var sample1 = new Stt.Sample(2486.4, 2220.3, 1369.4, 2676.6, 1945.6, 2329, 2540.7, 2089.8);
 			function gogo(){
-				console.log(new Date().getTime());
+				var t0 = (new Date().getTime());
 				var ttest = Stt.Math.ttest(sample0, sample1);
-				console.log(ttest);
-				console.log(new Date().getTime());
+				var t1 = (new Date().getTime());
+				alert('T-test value is ' + ttest + ', cost ' + (t1 - t0) + 'ms.');
 			}
 		</script>
 	</head>
