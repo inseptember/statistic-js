@@ -78,8 +78,17 @@ var Stt = {};
 			}
 		}
 		$$[name].prototype['_constructor_'] = (function(){_object.apply(this, [{}])});
+		if(!$$[name].prototype['init']){
+			$$[name].prototype['init'] = (function(){});
+		}
 		return $$[name];
-	}
+	};
+	$$.create = function(name, prop){
+		for(var k in prop){
+			$$[name][k] = p;
+		}
+		return $$[name];
+	};
 	$$.is = {
 		array : function(o){
 			return Object.prototype.toString.call(o) === '[object Array]';
